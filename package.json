@@ -1,13 +1,16 @@
 {
-  "name": "mini",
+  "name": "Dash Payment",
   "version": "1.0.0",
-  "description": "A simple dynamic site made with Node.js and Express.js",
+  "description": "A Dash payment web APP",
   "main": "app.js",
   "dependencies": {
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
     "jade": "^1.11.0",
-    "pug": "^2.0.3"
+    "moment": "^2.22.2",
+    "node-mysql": "^0.4.2",
+    "pug": "^2.0.3",
+    "wallet-address-validator": "^0.2.0"
   },
   "devDependencies": {},
   "scripts": {

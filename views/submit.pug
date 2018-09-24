@@ -1,0 +1,16 @@
+extend layout.pug
+
+block content
+    - var language = `${validated}`
+    if language == 'false' 
+        p There was an error with the data, please try again.
+    else
+        p This is an invoice number: #{id}  
+        div(style='display: -webkit-inline-box;')
+            p This is the address that is about to be acredited:&nbsp 
+            span#HexAddr  #{address}  
+        p This is the ammount: #{ammount}
+        script(type='text/javascript').
+            var el = kjua({text: $('#HexAddr').text().trim()});
+            document.querySelector('body').appendChild(el);
+        
