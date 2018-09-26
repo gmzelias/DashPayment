@@ -5,6 +5,8 @@ const cars = require('../carsData.json');
 var mysql      = require('mysql');
 var moment = require('moment');
 var addrValidator = require('wallet-address-validator');
+//var dashcore = require('@dashevo/dashcore-lib');
+var request = require('request');
 
 var pool      =    mysql.createPool({
   connectionLimit : 100, //important
@@ -18,6 +20,9 @@ var pool      =    mysql.createPool({
 
 //Front Page
 router.get('/', function (req, res) {
+  /*
+  var publicKey2 = new dashcore.PublicKey('022c79e7699ebb6c07afdcdfeb1aac03ce4707f0c2628bcbef86b93e2e6b97d69f');
+  var address = publicKey2.toAddress();*/
   res.render('index', { 
     title: 'Home', 
     message: pjson.formM, 
@@ -26,46 +31,72 @@ router.get('/', function (req, res) {
 })
 //Submit Button
 router.post('/submit', function (req, res, next) {
-    //Validate information
+  //Generate key and addresses
+  function getInformation(callback){
+    var address;
+  request.post(
+      "https://api.blockcypher.com/v1/dash/main/addrs",
+      { json: { key: 'value' } },
+      function (error, response, body) {
+          if (!error && response.statusCode == 201) {
+            address = body.address;
+            callback(address);
+          }
+      }
+  );
+  
+};
+    //information
     //-------------------------
-      var validated;
+    function setInformation(address){
+      console.log(req.body.Amount);
       var data = {
+      validated:'',
       InvoiceID : req.body.Invoice,
-      SAddress :'', 
-      RAddress : req.body.PubAddress, //attention
-      Ammount :req.body.Ammount, 
+      SimpleAddress :'', 
+      RAddress : address, //req.body.PubAddress, //attention
+      Amount :req.body.Amount, 
       Date :moment().format('llll')
-  };
+      }
+      var addrCheck = addrValidator.validate(data.RAddress, 'DASH');
+      if(addrCheck)
+        runQuery(data,setValue);
+     else
+     {
+       data.validated = false;
+        res.render('submit', {data});
+      }
+};
     //Validate address information
     //-------------------------------
-      var addrCheck = addrValidator.validate(data.RAddress, 'DASH');
-        if(addrCheck)
-          runQuery(setValue);
-       else
-       res.render('submit', {validated:false});
+    getInformation(setInformation);
 
-   function runQuery(callback) {
-      pool.query('INSERT INTO paymentinfo SET ?', data, function (error, results, fields) {
+   function runQuery(data,callback) {
+     var DataToInsert = {InvoiceID:data.InvoiceID,
+      SAddress:data.SimpleAddress,
+      RAddress:data.RAddress,
+      Amount:data.Amount,
+      Date:data.Date}
+      pool.query('INSERT INTO paymentinfo SET ?', DataToInsert, function (error, results, fields) {
         if (!error){
         console.log('Query executed.');
-        validated = true;
+        data.validated = true;
         }
         else{
+          console.log(error);
         console.log('Error while performing Query.');
-        validated = false;
+        data.validated = false;
         }
-      callback();
+      callback(data);
     });
   };
-  function setValue() {
-    var data2 = {
-      id: req.body.Invoice, 
-      address: req.body.PubAddress, 
-      ammount: req.body.Ammount,
-      validated:validated
-      }; 
-    res.render('submit', data2);
-  };
+
+  function setValue(data) {
+    data.SimpleAddress=data.RAddress;
+    data.RAddress = data.RAddress +'?amount='+data.Amount;
+    console.log(data);
+    res.render('submit', {data});
+    };
   
 
     //Select Query
